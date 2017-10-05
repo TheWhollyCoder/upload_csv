@@ -3,11 +3,13 @@
     class File{
         public $connection;
         public $File_array;
+        public $Contact;
 // *** Class Constructor ***
         public function __construct($connection, $file_array)
         {
             $this->connection = $connection;
             $this->File_array = $file_array;
+            $this->Contact = new Contact($this->connection);
         }
 // *** Check if file is a CSV FIle ***
         public function check_for_csv()
@@ -65,34 +67,22 @@
                 
                 $filename = $this->get_tmp_file();
                 $handle = fopen($filename, 'r');
-                $this->create_table();
-                
+                $this->Contact->create_table();
+                $processed = false;
                 while($data = fgetcsv($handle))
                 {
-                    $firstname  = mysqli_real_escape_string($this->connection, $data[0]);
-                    $lastname   = mysqli_real_escape_string($this->connection, $data[1]);
-                    $phone      = mysqli_real_escape_string($this->connection, $data[2]);
-                    $email      = mysqli_real_escape_string($this->connection, $data[3]);
-                    if($firstname == 'firstname'){
+                    if($processed == false){
                         $this->header = $data;
+                        $processed = true;
                         continue;
                     }
-                    $sql = "INSERT INTO table_contacts_171004(
-                        contact_ID, 
-                        contact_firstname, 
-                        contact_lastname, 
-                        contact_phone, 
-                        contact_email,
-                        contact_date_added
-                    ) values(
-                        NULL,
-                        '$firstname',
-                        '$lastname',
-                        '$phone',
-                        '$email',
-                        CURRENT_TIMESTAMP
-                    );";
-                    $result = $this->process_query($sql);
+
+                    $this->Contact->firstname  = ucfirst(mysqli_real_escape_string($this->connection, $data[0]));
+                    $this->Contact->lastname   = ucfirst(mysqli_real_escape_string($this->connection, $data[1]));
+                    $this->Contact->phone      = mysqli_real_escape_string($this->connection, $data[2]);
+                    $this->Contact->email      = mysqli_real_escape_string($this->connection, $data[3]);
+
+                    $this->Contact->insert_contact();
                 }
                 echo('Import Complete...<br>');
                 // prewrap($this->header);
